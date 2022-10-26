@@ -278,8 +278,8 @@ def scheduleRR(workArray:Array[JobInfo], timeSlice:Option[Int]) : Boolean = {
 
   var time = 0
   var nextInput = 0
-	var switchedHalfway = false
-  // schedule jobs until no more input and ready queue is empty
+  var i = 0
+// schedule jobs until no more input and ready queue is empty
   while ((nextInput < workArray.length || (readyQueue.length > 0))) {
     // add jobs with arrival times <= current time to ready queue
     while ((nextInput < workArray.length) && (workArray(nextInput).arrival <= time)) {
@@ -293,52 +293,41 @@ def scheduleRR(workArray:Array[JobInfo], timeSlice:Option[Int]) : Boolean = {
     }
 	
     if (readyQueue.length > 0) {
-	var jobIndex = readyQueue.dequeue
+	
+	var jobIndex = readyQueue.front
 	var job = workArray(jobIndex)
-	var i = 0
-	while (i < timeSlice.get) {
-		if (job.start == -1) {//ie: has not started yet
-			job.start = time
-			job.timeLeft = job.runtime
-		}
-		if (verbose) {
-			println("working on " + job.jobID)
-		}	
 
-		time += 1
-		job.timeLeft -= 1
-		if (job.timeLeft == 0){
-			
-			if (verbose) {
-				println("ending " + job.jobID)
-			}	
-			switchedHalfway = true
-			job.end = time
-			if (readyQueue.length > 0 && i < timeSlice.get -1){
-				jobIndex = readyQueue.dequeue
-				job = workArray(jobIndex)
-			}			
-		}		
-		i+=1
+	if (verbose) {println("working on " + job.jobID)}	
+
+	//check if its been enough time to switch jobs
+	if (i == timeSlice.get){
+		readyQueue.dequeue
+		readyQueue += jobIndex //cycle current jobIndex
+		jobIndex = readyQueue.front//new job
+		job = workArray(jobIndex)
+		i = 0
 	}
-	if (job.end == -1){	
-		readyQueue.enqueue(jobIndex)
-		if (switchedHalfway) {
-			switchedHalfway = false
-			var k = 0
-			var tempVal = 0
-			while (k < readyQueue.length - 1) {
-				tempVal = readyQueue.dequeue
-				readyQueue += tempVal
-				k += 1
-			}
-		}//bring her around to the front if we switched somethin
-	}    
+	//check if the job hasn't been run yet
+	if (job.start == -1) {
+		job.start = time
+		job.timeLeft = job.runtime
+	}
+	//increment!!!
+	time += 1
+	i += 1
+	job.timeLeft -= 1
+	//check if the job is done
+	if (job.timeLeft <= 0) {
+		if (verbose) {println("ending " + job.jobID)}
+		job.end = time
+		i = 0
+		readyQueue.dequeue
+	}
 }
     else {
       // maybe there's more input but with later arrival time
       // quick and dirty fix
-      time += timeSlice.get
+      time += 1
     }
   }
   true
