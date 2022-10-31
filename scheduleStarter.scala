@@ -281,23 +281,18 @@ def scheduleRR(workArray:Array[JobInfo], timeSlice:Option[Int]) : Boolean = {
   var i = 0
 // schedule jobs until no more input and ready queue is empty
   while ((nextInput < workArray.length || (readyQueue.length > 0))) {
+
     // add jobs with arrival times <= current time to ready queue
-    while ((nextInput < workArray.length) && (workArray(nextInput).arrival <= time)) {
-	readyQueue.enqueue(nextInput)
-	nextInput += 1
-    }
-    // if there's anything ready, schedule it
-    if (verbose) {
-      println("At time %d, ready queue %s".format(
-        time, listOfIDs(readyQueue.toList, workArray)))
-    }
 	
+	    while ((nextInput < workArray.length) && (workArray(nextInput).arrival <= time)) {
+		readyQueue.enqueue(nextInput)
+		nextInput += 1
+	    }	
+    // if there's anything ready, schedule it
     if (readyQueue.length > 0) {
 	
 	var jobIndex = readyQueue.front
 	var job = workArray(jobIndex)
-
-	if (verbose) {println("working on " + job.jobID)}	
 
 	//check if its been enough time to switch jobs
 	if (i == timeSlice.get){
@@ -307,6 +302,9 @@ def scheduleRR(workArray:Array[JobInfo], timeSlice:Option[Int]) : Boolean = {
 		job = workArray(jobIndex)
 		i = 0
 	}
+	if (verbose) {println("working on " + job.jobID)}	
+
+
 	//check if the job hasn't been run yet
 	if (job.start == -1) {
 		job.start = time
@@ -320,8 +318,11 @@ def scheduleRR(workArray:Array[JobInfo], timeSlice:Option[Int]) : Boolean = {
 	if (job.timeLeft <= 0) {
 		if (verbose) {println("ending " + job.jobID)}
 		job.end = time
-		i = 0
+			i = 0
 		readyQueue.dequeue
+	}
+	if (verbose) {println("At time %d, ready queue %s".format(
+        	time, listOfIDs(readyQueue.toList, workArray)))
 	}
 }
     else {
